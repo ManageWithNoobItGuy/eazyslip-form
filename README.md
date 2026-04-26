@@ -39,7 +39,7 @@
 
 ### ขั้นที่ 1 — เตรียม Google Sheets
 
-1. สร้าง Google Sheet ใหม่ ตั้งชื่อว่า `ระบบเช็ค slip`
+1. สร้าง Google Sheet ใหม่
 2. สร้างแท็บชื่อ **`รายละเอียดคอร์ส`** และใส่ข้อมูล:
 
    | A (ชื่อคอร์ส) | B (ราคา) |
@@ -86,76 +86,86 @@
 
 ---
 
-### ขั้นที่ 4 — แก้ไข index.html
+### ขั้นที่ 4 — Fork และแก้ไขโค้ด
 
-เปิดไฟล์ `index.html` แก้บรรทัดนี้:
-```js
-const APPS_SCRIPT_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
-```
-ใส่ URL จากขั้นที่ 2
+1. กด **Fork** ที่มุมขวาบนของ GitHub repo นี้
+2. เปิดไฟล์ `index.html` ใน repo ของคุณ → กด ✏️ แก้ไข
+3. แก้บรรทัดนี้:
+   ```js
+   const APPS_SCRIPT_URL = 'YOUR_APPS_SCRIPT_URL_HERE';
+   ```
+   ใส่ URL จากขั้นที่ 2
+4. กด **Commit changes**
 
 ---
 
-### ขั้นที่ 5 — Deploy ขึ้น Netlify
+### ขั้นที่ 5 — Deploy ขึ้น Netlify (ผ่านเว็บ ไม่ต้องใช้ Terminal)
 
-**วิธีที่ 1: Netlify CLI**
-```bash
-npm install -g netlify-cli
-netlify login
-netlify sites:create --name ชื่อ-site-ของคุณ --account-slug YOUR_TEAM_SLUG
-netlify deploy --prod --dir=.
-```
-
-**วิธีที่ 2: GitHub + Netlify**
-1. Push โค้ดขึ้น GitHub
-2. เข้า [app.netlify.com](https://app.netlify.com) → Add new site → Import from Git
+1. ไปที่ [app.netlify.com](https://app.netlify.com) → สมัคร/login
+2. กด **"Add new site"** → **"Import an existing project"**
+3. เลือก **"Deploy with GitHub"** → อนุญาตให้ Netlify เข้าถึง GitHub
+4. เลือก repo **eazyslip-form** ที่ Fork ไว้
+5. ในหน้า Build settings:
+   - **Branch to deploy:** `main`
+   - **Base directory:** _(เว้นว่าง)_
+   - **Build command:** _(เว้นว่าง)_
+   - **Publish directory:** `.`
+6. กด **"Deploy eazyslip-form"**
+7. รอ 1-2 นาที → ได้ URL เว็บไซต์ของคุณ 🎉
 
 ---
 
 ### ขั้นที่ 6 — ตั้งค่า Environment Variables ใน Netlify
 
-ไปที่ **Netlify Dashboard → Site → Site configuration → Environment variables**
-เพิ่มตัวแปรต่อไปนี้:
+1. ใน Netlify Dashboard → เลือก site ของคุณ
+2. ไปที่ **Site configuration → Environment variables**
+3. กด **"Add a variable"** แล้วเพิ่มทีละตัว:
 
 | Key | Value | จำเป็น |
 |---|---|---|
 | `EASYSLIP_API_KEY` | API Key จาก EasySlip | ✅ |
 | `APPS_SCRIPT_URL` | Web App URL จากขั้นที่ 2 | ✅ |
-| `RECEIVER_ACCOUNT` | เลขบัญชีผู้รับเงิน (ไม่มีขีด) | ✅ |
-| `OWNER_EMAIL` | อีเมลเจ้าของที่รับแจ้งเตือน | ✅ |
-| `GMAIL_USER` | Gmail ที่ใช้ส่งเมล | ➖ ถ้าต้องการส่งเมล |
-| `GMAIL_APP_PASSWORD` | App Password 16 ตัว | ➖ ถ้าต้องการส่งเมล |
+| `RECEIVER_ACCOUNT` | เลขบัญชีผู้รับเงิน (ไม่มีขีด เช่น `1234567890`) | ✅ |
+| `OWNER_EMAIL` | อีเมลเจ้าของที่รับแจ้งเตือนเมื่อมีคนสมัคร | ✅ |
+| `GMAIL_USER` | Gmail ที่ใช้ส่งเมลยืนยัน | ➖ ถ้าต้องการส่งเมล |
+| `GMAIL_APP_PASSWORD` | App Password 16 ตัวจากขั้นที่ 3 | ➖ ถ้าต้องการส่งเมล |
 
-หลังใส่ค่าแล้ว → **Deploys → Trigger deploy** เพื่อให้ค่าใหม่มีผล
+4. หลังใส่ครบ → ไปที่ **Deploys** → กด **"Trigger deploy"** → **"Deploy site"**
 
 ---
 
-## 🤖 วิธีใช้กับ Claude Code
+### ✅ เสร็จแล้ว!
 
-ถ้าคุณมี [Claude Code](https://claude.ai/code) ติดตั้งแล้ว สามารถให้ Claude ช่วย setup ได้เลย:
+เปิด URL ของ Netlify ทดสอบกรอกฟอร์มและอัปโหลดสลิปได้เลย
+
+---
+
+## 🤖 วิธีใช้กับ Claude Code (สำหรับนักพัฒนา)
+
+ถ้ามี [Claude Code](https://claude.ai/code) ติดตั้งแล้ว สามารถให้ Claude ช่วย setup ได้อัตโนมัติ:
 
 ```bash
 # 1. Clone โปรเจกต์
-git clone https://github.com/YOUR_USERNAME/eazyslip-form.git
+git clone https://github.com/ManageWithNoobItGuy/eazyslip-form.git
 cd eazyslip-form
 
 # 2. เปิด Claude Code
 claude
-
-# 3. บอก Claude ว่าต้องการทำอะไร เช่น:
 ```
 
-**ตัวอย่าง prompt ที่ใช้กับ Claude Code:**
+**จากนั้นบอก Claude ว่า:**
 
 > "ช่วย setup โปรเจกต์นี้ให้หน่อย โดยมีข้อมูลดังนี้:
 > - Apps Script URL: `https://script.google.com/...`
 > - EasySlip API Key: `xxx`
-> - บัญชีรับเงิน: ธนาคาร X เลขที่ XXXXXXX ชื่อ XXX
-> - อีเมลเจ้าของ: xxx@email.com
-> - Gmail สำหรับส่งเมล: xxx@gmail.com + App Password: xxxx xxxx xxxx xxxx
-> ให้ใส่ค่าใน Netlify env vars แล้ว deploy ขึ้น production ให้ด้วย"
+> - เลขบัญชีผู้รับเงิน: `XXXXXXXXXX`
+> - อีเมลเจ้าของคอร์ส: `xxx@email.com`
+> - Gmail สำหรับส่งเมล: `xxx@gmail.com`
+> - Gmail App Password: `xxxx xxxx xxxx xxxx`
+>
+> ให้ตั้งค่า env vars ใน Netlify และ deploy ขึ้น production ให้ด้วย"
 
-Claude Code จะจัดการ update config, set env vars และ deploy ให้อัตโนมัติ
+Claude Code จะจัดการ update config, ตั้ง env vars และ deploy ให้อัตโนมัติ
 
 ---
 
