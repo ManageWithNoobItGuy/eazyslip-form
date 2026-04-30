@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<base target="_top">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ลงทะเบียนคอร์สเรียน</title>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; }
+  body {
+    font-family: 'Sarabun', -apple-system, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    margin: 0;
+  }
+  .card {
+    background: #fff;
+    border-radius: 16px;
+    padding: 32px;
+    box-shadow: 0 20px 40px rgba(0,0,0,.15);
+    max-width: 500px;
+    width: 100%;
+  }
+  h1 { margin: 0 0 6px; font-size: 24px; color: #222; }
+  .subtitle { color: #666; font-size: 14px; margin-bottom: 24px; }
+  .field { margin-bottom: 16px; }
+  label { display: block; font-size: 14px; font-weight: 600; margin-bottom: 6px; color: #444; }
+  input, select {
+    width: 100%; padding: 11px 12px;
+    border: 1px solid #ddd; border-radius: 8px;
+    font-size: 15px; font-family: inherit;
+  }
+  input:focus, select:focus { outline: none; border-color: #667eea; }
+  .price-display {
+    background: #f0f4ff; border: 1px solid #d6e0ff;
+    border-radius: 8px; padding: 12px;
+    margin-bottom: 16px; display: none;
+  }
+  .price-display.show { display: block; }
+  .price-display strong { color: #5b6cf5; font-size: 20px; font-weight: 700; }
+  .bank-info {
+    background: #fffbe5; border-left: 4px solid #f5b800;
+    padding: 12px 14px; border-radius: 6px;
+    margin-bottom: 16px; font-size: 14px; line-height: 1.7;
+  }
+  .file-drop {
+    border: 2px dashed #c5c5c5; border-radius: 8px;
+    padding: 20px; text-align: center; cursor: pointer;
+    background: #fafafa;
+  }
+  .file-drop:hover { border-color: #667eea; background: #f5f7ff; }
+  .file-drop input { display: none; }
+  .preview { max-width: 100%; max-height: 240px; margin-top: 12px; border-radius: 8px; }
+  button {
+    width: 100%; padding: 14px;
+    background: #5b6cf5; color: #fff;
+    border: none; border-radius: 8px;
+    font-size: 16px; font-weight: 600;
+    font-family: inherit; cursor: pointer;
+  }
+  button:hover:not(:disabled) { background: #4956d6; }
+  button:disabled { background: #aaa; cursor: not-allowed; }
+  .alert {
+    padding: 14px; border-radius: 8px;
+    margin-bottom: 16px; font-size: 14px;
+    display: none;
+  }
+  .alert.show { display: block; }
+  .alert-success { background: #e8f5e9; color: #2e7d32; border: 1px solid #a5d6a7; }
+  .alert-error { background: #ffebee; color: #c62828; border: 1px solid #ef9a9a; }
+  .spinner {
+    display: inline-block; width: 16px; height: 16px;
+    border: 2px solid #fff; border-top-color: transparent;
+    border-radius: 50%; animation: spin .8s linear infinite;
+    vertical-align: middle; margin-right: 8px;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>📝 ลงทะเบียนคอร์สเรียน</h1>
+    <p class="subtitle">กรอกข้อมูล แนบสลิปโอนเงิน ระบบจะตรวจสอบอัตโนมัติ</p>
+
+    <div id="alert" class="alert"></div>
+
+    <form id="form">
+      <div class="field">
+        <label>ชื่อ-นามสกุล *</label>
+        <input type="text" name="name" required maxlength="100">
+      </div>
+
+      <div class="field">
+        <label>เบอร์ติดต่อ *</label>
+        <input type="tel" name="phone" required pattern="[0-9]{9,10}" placeholder="0812345678">
+      </div>
+
+      <div class="field">
+        <label>อีเมล *</label>
+        <input type="email" name="email" required placeholder="example@email.com">
+      </div>
+
+      <div class="field">
+        <label>เลือกคอร์ส *</label>
+        <select name="product" id="product" required>
+          <option value="">-- กำลังโหลด... --</option>
+        </select>
+      </div>
+
+      <div class="price-display" id="priceDisplay">
+        💰 ราคาคอร์ส: <strong id="priceValue">-</strong> บาท
+      </div>
+
+      <div class="bank-info">
+        <b>📌 โอนเงินตามราคาคอร์สเข้าบัญชีที่กำหนด</b><br>
+        <span style="color:#888;">(รายละเอียดบัญชีโปรดสอบถามเจ้าของคอร์ส)</span>
+      </div>
+
+      <div class="field">
+        <label>แนบสลิปโอนเงิน *</label>
+        <label class="file-drop" id="fileDrop">
+          <input type="file" id="slipFile" accept="image/*" required>
+          <div id="fileDropText">📷 คลิกเพื่อเลือกรูปสลิป</div>
+          <img id="preview" class="preview" style="display:none">
+        </label>
+      </div>
+
+      <button type="submit" id="submitBtn">ส่งข้อมูล</button>
+    </form>
+  </div>
+
+<script>
+let products = [];
+
+// โหลดรายการคอร์สจาก Apps Script
+google.script.run
+  .withSuccessHandler(function(res) {
+    products = res.products || [];
+    const sel = document.getElementById('product');
+    sel.innerHTML = '<option value="">-- เลือกคอร์ส --</option>';
+    products.forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.name;
+      opt.textContent = p.name;
+      opt.dataset.price = p.price;
+      sel.appendChild(opt);
+    });
+    if (res.error) showAlert('error', res.error);
+  })
+  .withFailureHandler(function(err) {
+    showAlert('error', 'โหลดคอร์สไม่สำเร็จ: ' + err.message);
+  })
+  .getProducts();
+
+document.getElementById('product').addEventListener('change', function(e) {
+  const opt = e.target.selectedOptions[0];
+  const price = opt && opt.dataset.price;
+  const display = document.getElementById('priceDisplay');
+  if (price) {
+    document.getElementById('priceValue').textContent = Number(price).toLocaleString();
+    display.classList.add('show');
+  } else {
+    display.classList.remove('show');
+  }
+});
+
+document.getElementById('slipFile').addEventListener('change', function(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 5 * 1024 * 1024) {
+    showAlert('error', 'ไฟล์รูปใหญ่เกิน 5MB');
+    e.target.value = '';
+    return;
+  }
+  const url = URL.createObjectURL(file);
+  const img = document.getElementById('preview');
+  img.src = url;
+  img.style.display = 'block';
+  document.getElementById('fileDropText').style.display = 'none';
+});
+
+function fileToBase64(file) {
+  return new Promise(function(resolve, reject) {
+    const reader = new FileReader();
+    reader.onload = function() { resolve(reader.result.split(',')[1]); };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+}
+
+function showAlert(type, msg) {
+  const el = document.getElementById('alert');
+  el.className = 'alert show alert-' + type;
+  el.textContent = msg;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function hideAlert() {
+  document.getElementById('alert').classList.remove('show');
+}
+
+document.getElementById('form').addEventListener('submit', async function(e) {
+  e.preventDefault();
+  hideAlert();
+  const btn = document.getElementById('submitBtn');
+  const fd = new FormData(e.target);
+  const file = document.getElementById('slipFile').files[0];
+  const productName = fd.get('product');
+  const product = products.find(p => p.name === productName);
+
+  if (!product) return showAlert('error', 'กรุณาเลือกคอร์ส');
+  if (!file) return showAlert('error', 'กรุณาแนบสลิป');
+
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spinner"></span>กำลังตรวจสอบสลิป...';
+
+  try {
+    const slipBase64 = await fileToBase64(file);
+
+    google.script.run
+      .withSuccessHandler(function(res) {
+        if (res.success) {
+          showAlert('success', '✅ ' + res.message);
+          e.target.reset();
+          document.getElementById('preview').style.display = 'none';
+          document.getElementById('fileDropText').style.display = 'block';
+          document.getElementById('priceDisplay').classList.remove('show');
+        } else {
+          showAlert('error', '❌ ' + res.message);
+        }
+        btn.disabled = false;
+        btn.textContent = 'ส่งข้อมูล';
+      })
+      .withFailureHandler(function(err) {
+        showAlert('error', 'เกิดข้อผิดพลาด: ' + err.message);
+        btn.disabled = false;
+        btn.textContent = 'ส่งข้อมูล';
+      })
+      .submitRegistration({
+        name: fd.get('name'),
+        phone: fd.get('phone'),
+        email: fd.get('email'),
+        product: productName,
+        price: product.price,
+        slipBase64: slipBase64
+      });
+
+  } catch (err) {
+    showAlert('error', 'เกิดข้อผิดพลาด: ' + err.message);
+    btn.disabled = false;
+    btn.textContent = 'ส่งข้อมูล';
+  }
+});
+</script>
+</body>
+</html>
