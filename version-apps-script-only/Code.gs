@@ -4,15 +4,22 @@
  *
  * ก่อนใช้งาน:
  * 1. ตั้งค่า Script Properties (Project Settings → Script properties)
- *    - EASYSLIP_API_KEY: API key จาก easyslip.com
- *    - RECEIVER_ACCOUNT: เลขบัญชีรับเงิน (ไม่มีขีด)
- *    - OWNER_EMAIL: อีเมลเจ้าของคอร์ส (รับแจ้งเตือน)
- * 2. สร้างแท็บ "รายละเอียดคอร์ส" ใน Sheet ใส่คอลัมน์: ชื่อคอร์ส | ราคา
- * 3. Deploy → Web app → Execute as: Me, Who has access: Anyone
+ *    - EASYSLIP_API_KEY : API key จาก easyslip.com  [จำเป็น]
+ *    - OWNER_EMAIL      : อีเมลเจ้าของคอร์ส (รับแจ้งเตือน)
+ *    - RECEIVER_ACCOUNT : (optional) เลขบัญชีรับเงิน ไม่มีขีด
+ *                         ถ้ามีแท็บ "config" ใน Sheet ระบบจะใช้ค่าจาก Sheet แทน
+ * 2. สร้างแท็บ "รายละเอียดคอร์ส" ใน Sheet: คอลัมน์ A = ชื่อคอร์ส, B = ราคา
+ * 3. สร้างแท็บ "config" ใน Sheet (แก้ไขบัญชีรับโอนได้โดยไม่ต้องแตะโค้ด):
+ *    คอลัมน์ A (key) | คอลัมน์ B (value)
+ *    ธนาคาร          | กสิกรไทย
+ *    เลขบัญชี        | 123-4-56789-0
+ *    ชื่อบัญชี       | นายตัวอย่าง ตัวอย่าง
+ * 4. Deploy → Web app → Execute as: Me, Who has access: Anyone
  */
 
 const COURSE_SHEET = 'รายละเอียดคอร์ส';
 const REGISTRATION_SHEET = 'ลงทะเบียน';
+const CONFIG_SHEET = 'config';
 
 
 // === Web App Entry Point ===
@@ -21,6 +28,37 @@ function doGet() {
     .setTitle('ลงทะเบียนคอร์สเรียน')
     .addMetaTag('viewport', 'width=device-width, initial-scale=1.0')
     .setXFrameOptionsMode(HtmlService.XFrameOptionsMode.ALLOWALL);
+}
+
+
+// === ส่งข้อมูล config (บัญชีธนาคาร) ให้ฟอร์ม (เรียกจาก google.script.run) ===
+function getConfig() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(CONFIG_SHEET);
+    if (!sheet) {
+      return { bankName: '', accountNumber: '', accountName: '',
+               error: 'ไม่พบแท็บ "' + CONFIG_SHEET + '" — กรุณาสร้างแท็บนี้ใน Sheet' };
+    }
+    const lastRow = sheet.getLastRow();
+    if (lastRow < 1) return { bankName: '', accountNumber: '', accountName: '' };
+
+    const data = sheet.getRange(1, 1, lastRow, 2).getValues();
+    const map = {};
+    data.forEach(function(row) {
+      const key = String(row[0]).trim();
+      const val = String(row[1]).trim();
+      if (key) map[key] = val;
+    });
+
+    return {
+      bankName:      map['ธนาคาร']    || '',
+      accountNumber: map['เลขบัญชี']  || '',
+      accountName:   map['ชื่อบัญชี'] || ''
+    };
+  } catch (err) {
+    return { bankName: '', accountNumber: '', accountName: '', error: err.message };
+  }
 }
 
 
@@ -67,7 +105,7 @@ function submitRegistration(payload) {
 
     // 3. ตรวจบัญชีผู้รับ
     const props = PropertiesService.getScriptProperties();
-    const expectedAccount = props.getProperty('RECEIVER_ACCOUNT') || '';
+    const expectedAccount = getReceiverAccount_();
     const receiverAcct = ((d.receiver && d.receiver.account && d.receiver.account.bank && d.receiver.account.bank.account) || '').replace(/\D/g, '');
     if (expectedAccount && receiverAcct && !receiverAcct.includes(expectedAccount.slice(-4))) {
       return { success: false, message: 'สลิปไม่ได้โอนเข้าบัญชีที่กำหนด' };
@@ -100,6 +138,24 @@ function submitRegistration(payload) {
   } catch (err) {
     return { success: false, message: 'เกิดข้อผิดพลาด: ' + err.message };
   }
+}
+
+
+// === อ่านเลขบัญชีผู้รับจาก config Sheet (fallback → Script Properties) ===
+function getReceiverAccount_() {
+  try {
+    const ss = SpreadsheetApp.getActiveSpreadsheet();
+    const sheet = ss.getSheetByName(CONFIG_SHEET);
+    if (sheet) {
+      const lastRow = sheet.getLastRow();
+      if (lastRow > 0) {
+        const data = sheet.getRange(1, 1, lastRow, 2).getValues();
+        const row = data.find(function(r) { return String(r[0]).trim() === 'เลขบัญชี'; });
+        if (row && row[1]) return String(row[1]).replace(/\D/g, '');
+      }
+    }
+  } catch (e) { /* fallthrough */ }
+  return PropertiesService.getScriptProperties().getProperty('RECEIVER_ACCOUNT') || '';
 }
 
 

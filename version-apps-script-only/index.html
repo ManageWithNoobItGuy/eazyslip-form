@@ -116,9 +116,9 @@
         💰 ราคาคอร์ส: <strong id="priceValue">-</strong> บาท
       </div>
 
-      <div class="bank-info">
-        <b>📌 โอนเงินตามราคาคอร์สเข้าบัญชีที่กำหนด</b><br>
-        <span style="color:#888;">(รายละเอียดบัญชีโปรดสอบถามเจ้าของคอร์ส)</span>
+      <div class="bank-info" id="bankInfo">
+        <b>📌 ข้อมูลบัญชีรับโอน</b><br>
+        <span id="bankDetails" style="color:#888;">กำลังโหลด...</span>
       </div>
 
       <div class="field">
@@ -136,6 +136,27 @@
 
 <script>
 let products = [];
+
+// โหลดข้อมูลบัญชีธนาคารจาก Apps Script
+google.script.run
+  .withSuccessHandler(function(cfg) {
+    const el = document.getElementById('bankDetails');
+    if (!cfg || (!cfg.bankName && !cfg.accountNumber && !cfg.accountName)) {
+      el.innerHTML = '<span style="color:#888;">(ยังไม่ได้ตั้งค่าบัญชีใน Sheet — กรุณาเพิ่มแท็บ "config")</span>';
+      return;
+    }
+    let html = '';
+    if (cfg.bankName)      html += 'ธนาคาร: <b>' + cfg.bankName + '</b><br>';
+    if (cfg.accountNumber) html += 'เลขบัญชี: <b>' + cfg.accountNumber + '</b><br>';
+    if (cfg.accountName)   html += 'ชื่อบัญชี: <b>' + cfg.accountName + '</b>';
+    el.innerHTML = html || '<span style="color:#888;">(ไม่พบข้อมูลบัญชีใน Sheet)</span>';
+    if (cfg.error) el.innerHTML += '<br><span style="color:#c62828;font-size:12px;">⚠️ ' + cfg.error + '</span>';
+  })
+  .withFailureHandler(function(err) {
+    document.getElementById('bankDetails').innerHTML =
+      '<span style="color:#888;">(โหลดข้อมูลบัญชีไม่สำเร็จ: ' + err.message + ')</span>';
+  })
+  .getConfig();
 
 // โหลดรายการคอร์สจาก Apps Script
 google.script.run
